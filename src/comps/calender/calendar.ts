@@ -29,6 +29,7 @@ export class calendar implements OnInit {
         console.log(this.calendarHtml.toString()); // הוסף כאן לוג לבדוק את התוצאה
     }
 restartFrom() {
+    console.log("restartFrom called");
     this.myForm = new FormGroup({
         month: new FormControl(new Date().getMonth()),
         year: new FormControl(new Date().getFullYear()),
@@ -41,7 +42,12 @@ restartFrom() {
     this.calendarService.getcalendarItems().subscribe(
         (items: Array<Calendar>) => {
             this.itemsList = items; // שמירת כל הנתונים ברשימה
-            this.myForm.patchValue({ items: this.itemsList }); // עדכון הערך של items ב-FormGroup
+            console.log("Fetched calendar items:", this.itemsList);
+            if(this.itemsList.length === 0) {
+                console.log("No calendar items found.");
+            } else {
+                this.myForm.patchValue({ items: this.itemsList }); // עדכון הערך של items ב-FormGroup
+            }
         },
         (error) => {
             console.error('Error fetching calendar items:', error);
@@ -49,6 +55,7 @@ restartFrom() {
     );
 }
     generateCalendar() {
+        console.log("generateCalendar called");
     const thisDay = new Date();
     let calendarHtml = `<section class="calendar__top-bar">
       <span class="top-bar__days">Mon</span>
@@ -85,17 +92,28 @@ restartFrom() {
 
     // מילוי הימים מהחודש הנוכחי
     for (let days = 0; days < daysInCurrentMonth; days++) {
-        const successItem = this.itemsList.find(item => {
-            const itemDateStr = (item.Date instanceof Date)
-                ? item.Date.toISOString().split('T')[0]
-                : item.Date;
-            return itemDateStr === new Date(thisDay.getFullYear(), thisDay.getMonth(), days + 1).toISOString().split('T')[0];
-        });
+            const successItem = this.itemsList.find(item => {
+        const itemDateStr = (item.date instanceof Date)
+            ? item.date.toISOString().split('T')[0]
+            : item.date;
+        // כאן אתה יכול לבדוק אם ה-ID תואם ל-ID שאתה רוצה לסנן
+        return item.userId === Number(localStorage.getItem('userId')); // החלף yourDesiredId עם ה-ID שאתה רוצה לסנן
+    });
         let className = '';
 
+    try {
         if (successItem) {
-            className = successItem.sucsess ? 'success' : 'failure';
+            className = successItem.success ? 'success' : 'failure';
+            console.log("sucsses response:", className);
+        } else {
+            console.log("successItem not found for date:", new Date(thisDay.getFullYear(), thisDay.getMonth(), days + 1));
+            className = 'failure'; // ברירת מחדל במקרה של לא נמצא successItem
         }
+    } catch (error) {
+        console.error("Error processing successItem:", error);
+        className = 'failure'; // ברירת מחדל במקרה של שגיאה
+    }
+
 
         if (isWeek == 7) {
             calendarHtml += `</section><section class="calendar__week">`;
