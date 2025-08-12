@@ -19,8 +19,10 @@ export class calendar implements OnInit {
     @Input() year!: number;
     @Input() day!: number;
     @Input() dayOfWeek!: number;
-    itemsList: Array<Calendar> = []; // הגדרת רשימה לאחסון הנתונים
-
+    theDay: Date = new Date();
+    endMonth : Date = new Date(this.theDay.getFullYear(), this.theDay.getMonth() + 1, 0);
+    numOfDays: number = this.endMonth.getDate();
+    itemsList: Calendar[] = new Array(this.numOfDays).fill(null); // הגדרת רשימה לאחסון הנתונים
     myForm: FormGroup = new FormGroup({}); // הוסף את ה-FormGroup
     constructor(private sanitizer: DomSanitizer ,public calendarService: calendarService) {} // הוסף את DomSanitizer לקונסטרקטור
     ngOnInit(): void {
@@ -39,20 +41,31 @@ restartFrom() {
 
     });
 
-    this.calendarService.getcalendarItems().subscribe(
-        (items: Array<Calendar>) => {
-            this.itemsList = items; // שמירת כל הנתונים ברשימה
-            console.log("Fetched calendar items:", this.itemsList);
-            if(this.itemsList.length === 0) {
-                console.log("No calendar items found.");
-            } else {
-                this.myForm.patchValue({ items: this.itemsList }); // עדכון הערך של items ב-FormGroup
+ this.calendarService.getcalendarItems().subscribe(
+    (items: Array<Calendar>) => {
+        this.itemsList = []; // אתחול המערך
+        console.log("Fetched calendar items:", items);
+        
+        const userId = Number(localStorage.getItem("userId")); // קבלת מזהה המשתמש
+        for (let i = 0; i < items.length; i++) {
+            // הוספת אובייקט אם ה-userId תואם
+            if (items[i].userId === userId) {
+                this.itemsList[i] = items[i]; // הוספת האובייקט במיקום המתאים
             }
-        },
-        (error) => {
-            console.error('Error fetching calendar items:', error);
         }
-    );
+        
+        console.log("Filtered itemsList for userId:", this.itemsList);
+        this.myForm.patchValue({ items: this.itemsList }); // עדכון הערך של items ב-FormGroup
+    },
+    (error) => {
+        console.error('Error fetching calendar items:', error);
+    }
+);
+
+
+
+
+    console.log("this is itemsList:", this.itemsList);
 }
     generateCalendar() {
         console.log("generateCalendar called");
@@ -92,19 +105,22 @@ restartFrom() {
 
     // מילוי הימים מהחודש הנוכחי
     for (let days = 0; days < daysInCurrentMonth; days++) {
-            const successItem = this.itemsList.find(item => {
-        const itemDateStr = (item.date instanceof Date)
-            ? item.date.toISOString().split('T')[0]
-            : item.date;
-        // כאן אתה יכול לבדוק אם ה-ID תואם ל-ID שאתה רוצה לסנן
-        return item.userId === Number(localStorage.getItem('userId')); // החלף yourDesiredId עם ה-ID שאתה רוצה לסנן
-    });
+
+const successItem = this.itemsList.map(item => {
+    // כאן תוכל להוסיף את הלוגיקה שלך לקביעת הערך
+    if (item) {
+        // לדוגמה: אם יש מאפיין מסוים שאתה בודק
+        return item.success ? true : false; // מחזיר true אם התנאי מתקיים, אחרת false
+    }
+    return null; // מחזיר null אם הפריט הוא null
+});
         let className = '';
 
     try {
         if (successItem) {
-            className = successItem.success ? 'success' : 'failure';
-            console.log("sucsses response:", className);
+className = successItem[days] === true ? 'success' : 
+            (successItem[days] === false ? 'failure' : '');
+                        console.log("sucsses response:", className);
         } else {
             console.log("successItem not found for date:", new Date(thisDay.getFullYear(), thisDay.getMonth(), days + 1));
             className = 'failure'; // ברירת מחדל במקרה של לא נמצא successItem
