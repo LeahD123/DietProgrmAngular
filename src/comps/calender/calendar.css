@@ -21,11 +21,11 @@ p, span, ul, li {
   font-size: 1rem;
 }
 .success {
-    background-color: red;
+    background-color: rgb(240, 162, 199);
 }
 
 .failure {
-    background-color: blue;
+    background-color: rgb(146, 146, 236);
 }
 
 .calendar-contain {
@@ -368,7 +368,7 @@ p, span, ul, li {
   color: #c6c6c6;
 }
 .calendar__week .today .calendar__date {
-  color: #fd588a;
+  color: #f3b3c6;
 }
 
 .calendar__task {
